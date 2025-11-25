@@ -1,0 +1,95 @@
+import csv
+
+def pedir_numero(prompt):
+    while True:
+        entrada = input(prompt)
+        try:
+            valor = float(entrada)
+            return valor
+        except ValueError:
+            print(" Valor inválido. Ingresa un número decimal válido.")
+
+def recolectar_prueba_F_ma(nombre_prueba, num_reps=10):
+    print(f"\n--- {nombre_prueba} (F = ma) ---")
+    datos = []
+
+    for i in range(num_reps):
+        print(f"\nRepetición {i+1}:")
+        masa = pedir_numero("Ingresa la masa del objeto (kg): ")
+        distancia = pedir_numero("Ingresa la distancia recorrida desde reposo (m): ")
+        tiempo = pedir_numero("Ingresa el tiempo total del recorrido (s): ")
+
+        v_prom = distancia / tiempo
+        a = v_prom / tiempo
+        F = masa * a
+
+        print(f" Fuerza calculada: {F:.4f} N")
+        datos.append({
+            "Prueba": nombre_prueba,
+            "Repetición": i+1,
+            "Masa (kg)": masa,
+            "Distancia (m)": distancia,
+            "Tiempo (s)": tiempo,
+            "Vel/Acc (m/s²)": a,
+            "Fuerza (N)": F
+        })
+
+        if i < num_reps - 1:
+            cont = input("¿Deseas ingresar otra repetición? (s/n): ").strip().lower()
+            if cont != 's':
+                break
+
+    return datos
+
+def recolectar_prueba_F_mtv(nombre_prueba, num_reps=10):
+    print(f"\n--- {nombre_prueba} (F = m/t * v) ---")
+    datos = []
+
+    for i in range(num_reps):
+        print(f"\nRepetición {i+1}:")
+        masa_aire = pedir_numero("Ingresa la masa del aire (kg): ")
+        tiempo = pedir_numero("Ingresa el tiempo de desinflado (s): ")
+        volumen = pedir_numero("Ingresa el volumen de aire desplazado (m³): ")
+
+        v = volumen / tiempo
+        F = (masa_aire / tiempo) * v
+
+        print(f" Fuerza calculada: {F:.4f} N")
+        datos.append({
+            "Prueba": nombre_prueba,
+            "Repetición": i+1,
+            "Masa (kg)": masa_aire,
+            "Volumen (m³)": volumen,
+            "Tiempo (s)": tiempo,
+            "Vel/Acc (m/s²)": v,
+            "Fuerza (N)": F
+        })
+
+        if i < num_reps - 1:
+            cont = input("¿Deseas ingresar otra repetición? (s/n): ").strip().lower()
+            if cont != 's':
+
+    return datos
+
+def guardar_csv(nombre_archivo, lista_datos):
+    if not lista_datos:
+        print("No hay datos para guardar.")
+        return
+
+    with open(nombre_archivo, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=lista_datos[0].keys())
+        writer.writeheader()
+        for fila in lista_datos:
+            writer.writerow(fila)
+    print(f" Datos guardados en {nombre_archivo}")
+
+if __name__ == "__main__":
+    todos_datos = []
+
+    print("=== Recolección de datos para F = ma ===")
+    todos_datos += recolectar_prueba_F_ma("F = ma")
+
+    print("\n=== Recolección de datos para F = m/t * v ===")
+    todos_datos += recolectar_prueba_F_mtv("F = m/t * v")
+
+    guardar_csv("datos_pruebas.csv", todos_datos)
