@@ -1,0 +1,160 @@
+import csv
+import math
+
+# ==========================
+# VALIDACIÓN DE NÚMEROS
+# ==========================
+def pedir_numero(prompt, positivo=False):
+    while True:
+        entrada = input(prompt)
+        try:
+            valor = float(entrada)
+            if positivo and valor <= 0:
+                print(" Error: el número debe ser mayor que 0.\n")
+                continue
+            return valor
+        except ValueError:
+            print(" Error: Ingresa un número válido.\n")
+
+# ==========================
+# PARTE 1 — F = m·a
+# ==========================
+def prueba_f_ma():
+    print("\n=== CÁLCULO DE F = m·a ===\n")
+    datos = []
+    i = 0
+    while True:
+        i += 1
+        print(f"\n--- Repetición {i} ---")
+        opcion = input("Deseas calcular esta repetición? (S/N, o P para pasar a la siguiente fórmula): ").strip().upper()
+        if opcion == "P":
+            break
+        elif opcion != "S":
+            print("Opción no válida, se omite repetición.")
+            continue
+
+        m_inicial = pedir_numero("Masa inicial del sistema (kg): ", positivo=True)
+        m_final = pedir_numero("Masa final del sistema (kg): ", positivo=True)
+        masa_prom = (m_inicial + m_final) / 2
+
+        distancia = pedir_numero("Distancia recorrida (m): ", positivo=True)
+        tiempo = pedir_numero("Tiempo hasta detenerse (s): ", positivo=True)
+
+        a = (2 * distancia) / (tiempo ** 2)
+        F = masa_prom * a
+
+        print(f"Aceleración media = {a:.4f} m/s²")
+        print(f"Fuerza media (F = m·a) = {F:.4f} N")
+
+        datos.append({
+            "Tipo": "F_ma",
+            "Repeticion": i,
+            "Masa_inicial_kg": m_inicial,
+            "Masa_final_kg": m_final,
+            "Masa_promedio_kg": masa_prom,
+            "Distancia_m": distancia,
+            "Tiempo_s": tiempo,
+            "Aceleracion_m_s2": round(a, 4),
+            "Fuerza_N": round(F, 4)
+        })
+    return datos
+
+# ==========================
+# PARTE 2 — Fuerza de acción (con presión promedio)
+# ==========================
+def prueba_accion():
+    print("\n=== CÁLCULO DE FUERZA DE ACCIÓN (Bernoulli) ===\n")
+    datos = []
+
+    rho = 1.22                   # densidad aire
+    presion_promedio = 2152.0612 # Pa
+    velocidad_aire = math.sqrt((2 * presion_promedio) / rho)
+
+    i = 0
+    while True:
+        i += 1
+        print(f"\n--- Repetición {i} ---")
+        opcion = input("Deseas calcular esta repetición? (S/N, o F para finalizar): ").strip().upper()
+        if opcion == "F":
+            break
+        elif opcion != "S":
+            print("Opción no válida, se omite repetición.")
+            continue
+
+        m_inflado = pedir_numero("Masa del globo inflado (kg): ", positivo=True)
+        m_desinflado = pedir_numero("Masa del globo desinflado (kg): ", positivo=True)
+        m_aire = m_inflado - m_desinflado
+        if m_aire < 0:
+            print("Advertencia: masa de aire negativa, se ajustará a 0.")
+            m_aire = 0
+
+        t_des = pedir_numero("Tiempo de desinflado (s): ", positivo=True)
+
+        mdot = m_aire / t_des  # caudal
+        F = mdot * velocidad_aire
+
+        print(f"Velocidad del aire (Bernoulli) = {velocidad_aire:.4f} m/s")
+        print(f"Fuerza de acción (ṁ·v) = {F:.4f} N")
+
+        datos.append({
+            "Tipo": "F_accion",
+            "Repeticion": i,
+            "Masa_globo_inflado_kg": m_inflado,
+            "Masa_globo_desinflado_kg": m_desinflado,
+            "Masa_aire_kg": round(m_aire, 4),
+            "Tiempo_desinflado_s": t_des,
+            "Velocidad_aire_m_s": round(velocidad_aire, 4),
+            "Caudal_mdot_kg_s": round(mdot, 6),
+            "Fuerza_N": round(F, 4)
+        })
+
+    return datos
+
+# ==========================
+# GUARDAR CSV
+# ==========================
+def guardar_csv(nombre, datos):
+    if not datos:
+        print("No hay datos para guardar.")
+        return
+
+    campos = [
+        "Tipo", "Repeticion", "Masa_inicial_kg", "Masa_final_kg", "Masa_promedio_kg",
+        "Distancia_m", "Tiempo_s", "Aceleracion_m_s2", "Fuerza_N",
+        "Masa_globo_inflado_kg", "Masa_globo_desinflado_kg", "Masa_aire_kg",
+        "Tiempo_desinflado_s", "Velocidad_aire_m_s", "Caudal_mdot_kg_s"
+    ]
+
+    datos_unificados = []
+    for fila in datos:
+        fila_unificada = {campo: fila.get(campo, "") for campo in campos}
+        datos_unificados.append(fila_unificada)
+
+    with open(nombre, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=campos)
+        writer.writeheader()
+        writer.writerows(datos_unificados)
+
+    print(f"\n✔ CSV guardado como: {nombre}")
+
+# ==========================
+# MAIN
+# ==========================
+if __name__ == "__main__":
+    print("=== RECOLECCIÓN COMPLETA ===")
+
+    todos_los_datos = []
+
+    # Parte 1
+    datos_ma = prueba_f_ma()
+    todos_los_datos.extend(datos_ma)
+
+    # Parte 2
+    datos_accion = prueba_accion()
+    todos_los_datos.extend(datos_accion)
+
+    if todos_los_datos:
+        nombre_archivo = "resultados_experimento_globo.csv"
+        guardar_csv(nombre_archivo, todos_los_datos)
+    else:
+        print("\nNo se recolectaron datos durante la ejecución.")
